@@ -1,0 +1,21 @@
+url: http://artsy.github.io
+title: melon studios 🍉
+permalink: /:title/
+baseurl: "" # the subpath of your site, e.g. /blog/
+github_username:  Artsy
+disqus_short_name: artsy
+disqus_show_comment_count: false
+
+exclude: [vendor]
+
+gems: ['jekyll-lunr-js-search']
+lunr_search:
+  js_dir: "javascripts"
+
+markdown: rdiscount
+highlighter: pygments
+
+markdown: rdiscount
+rdiscount:
+    extensions:
+        - generate_toc

@@ -1,0 +1,11 @@
+---
+layout: default
+---
+<div class="blog-index">
+  {% for post in site.posts.title.games %}
+    {% assign content = post.content %}
+      <article>
+        {% include melonpage.html %}
+      </article>
+  {% endfor %}
+</div>

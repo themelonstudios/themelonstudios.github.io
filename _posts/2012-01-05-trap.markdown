@@ -1,0 +1,48 @@
+---
+layout: default
+title: "trap"
+categories: "games"
+---
+
+<div align="center">
+<img src="/images/trapfeaturegraphic.png" width="75%" >
+</div>
+
+<div style="background-color:#26BD7B;margin-left:11%;margin-right:11%;padding:1%" align="center">
+<font color="#FFFFFF" style="text-align:left"><font face="Arial Rounded MT Bold" size="6">
+<div style="text-align:center">
+<span style="background-color:transparent;line-height:1.5">Eat cheese, don't fall!
+</span>
+</div>
+</font>
+</font>
+<font color="#ffffff" style="text-align:left"><font face="Arial Rounded MT Bold">
+<div align="center">
+<img src="/images/trapvideo.gif" width="40%">
+</div>
+<div style="text-align:center">
+<ul style="display: inline-block">
+<li style="text-align:left">🐭 Eat the Cheese, but avoid the traps!</li>
+<li style="text-align:left">🧀 Traps appear if you are too slow.</li>
+<li style="text-align:left">🐭 How many can you eat before being trapped? </li>
+</ul>
+</div>
+</font>
+</font>
+</div>
+
+<div style="background-color:#26BD7B;margin-left:11%;margin-right:11%;padding:1%" align="center">
+<font color="#ffffff" style="text-align:left"><font face="Arial Rounded MT Bold" size="6">
+<div style="text-align:center">
+<span style="background-color:transparent;line-height:1.5">download here:
+</span>
+</div>
+</font>
+</font>
+<div class = "image" align="center"style="width:auto;display:inline-block;">
+<a href="https://play.google.com/store/apps/details?id=com.kevvapps.trap" style="line-height:1.5">
+<img alt="Android app on Google Play" src="https://developer.android.com/images/brand/en_app_rgb_wo_60.png">
+</a>
+</div>
+</font>
+</div>

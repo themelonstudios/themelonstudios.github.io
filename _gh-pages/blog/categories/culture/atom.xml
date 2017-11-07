@@ -1,0 +1,732 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: culture | Artsy Engineering]]></title>
+  <link href="http://artsy.github.io/blog/categories/culture/atom.xml" rel="self"/>
+  <link href="http://artsy.github.io/"/>
+  <updated>2017-09-10T21:04:34-04:00</updated>
+  <id>http://artsy.github.io/</id>
+  <author>
+    <name><![CDATA[]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Introducing Peril to the Artsy Org]]></title>
+    <link href="http://artsy.github.io/blog/2017/09/04/Introducing-Peril/"/>
+    <updated>2017-09-04T00:00:00-04:00</updated>
+    <id>http://artsy.github.io/blog/2017/09/04/Introducing-Peril</id>
+    <content type="html"><![CDATA[<p>Once Danger Ruby was stable enough for everyday use in 2015, it became obvious that running Danger on CI was both a
+positive and a negative. On the positive side, Danger has access to all artifacts created during testing - and on the negative
+side it takes a long time to get feedback. It was obvious that Danger could <a href="https://github.com/danger/danger/issues/42">run on a server</a>, but it was a big unknown what that could look like.</p>
+
+<p>Eventually, <a href="/blog/2017/06/30/danger-one-oh-again/">I came to the conclusion</a> that we would need a JavaScript replacement of Danger - and so I applied
+constraints to Danger JS that made a server-side version of Danger a possibility. It was a stroke of luck that around the
+time Danger JS became usable for day to day usage, that GitHub introduced <a href="https://developer.github.com/changes/2016-09-14-Integrations-Early-Access/">GitHub Apps</a> - so I started work on Peril. Peril is server-side Danger. The rest of this post talks about how we use it Artsy today, how you can use it yourself and where it's heading.</p>
+
+<!-- more -->
+
+
+<p>In December 2016, I built out Peril in a sandbox org: <a href="https://github.com/PerilTest">PerilTest</a>, this gave me the chance to get a lot of things wrong safely. My biggest worry around Peril was leaking data though someone abusing the ability to evaluate a Dangerfile.</p>
+
+<p>In May 2017, I introduced Peril into Artsy's org, GitHub apps have the ability to pick and choose which repos to work with.
+I scoped the repos to existing open source projects which I was familiar with (<a href="https://github.com/artsy/emission">Emission</a>, <a href="https://github.com/artsy/reaction">Reaction</a> and <a href="https://github.com/artsy/positron">Positron</a>)
+which gave a space to ensure stability and handle production edge-cases.</p>
+
+<p>In August 2017, I created a new Peril instance for CocoaPods. I then finally flipped the switch to turn Peril on for all
+repos on the Artsy org and formalized the RFC process for changes. This is where we are now.</p>
+
+<a name="Getting.Set.Up"></a>
+<h2>Getting Set Up</h2>
+
+<p>For our Artsy org, I followed and improved the guide: <a href="https://github.com/danger/peril/blob/master/docs/setup_for_org.md">Setup for Org</a>. There are three key components:</p>
+
+<ul>
+<li>Creating a GitHub app for your Org</li>
+<li>Hosting a Peril server</li>
+<li>Making up a Peril settings repo</li>
+</ul>
+
+
+<p>The guide covers the initial setup, but I'd like to cover the third part of our setup.</p>
+
+<a name="How.Artsy.s.Peril.works"></a>
+<h2>How Artsy's Peril works</h2>
+
+<p>The Artsy Peril settings are all on <a href="https://github.com/artsy/artsy-danger">artsy/artsy-danger</a>. The Artsy Peril heroku instance has the ENV var
+<code>"DATABASE_JSON_FILE"</code> set to <code>"artsy/artsy-danger@peril.settings.json"</code>, so Peril will use <a href="https://github.com/artsy/artsy-danger/blob/master/peril.settings.json">that file</a> as the source of truth for all config. Here's what it is today:</p>
+
+<p></article>
+<article class='split-desktop-only'></p>
+
+<div style='flex:1; display: block;'>
+
+```json
+{
+  "settings": {
+    "modules": [
+      "danger-plugin-spellcheck", 
+      "danger-plugin-yarn", 
+      "@slack/client"
+    ],
+    "env_vars": ["SLACK_RFC_WEBHOOK_URL"]
+  },
+  "rules": {
+    "pull_request": "artsy/artsy-danger@org/all-prs.ts"
+  },
+  "repos" : {
+    "artsy/reaction": {
+      "pull_request": "danger/pr.ts"
+    },
+    "artsy/positron": {
+      "pull_request": "dangerfile.ts"
+    },
+    "artsy/artsy-danger": {
+      "issues.opened": "artsy/artsy-danger@danger/new_rfc.ts"
+    }
+  }
+}
+```
+
+</div>
+
+
+<div style='flex:1; display: block; padding:0 20px;'>
+
+<p><code>"settings":</code> These settings which conform to today's <a href='https://github.com/danger/peril/blob/752afeb37e3c1fdec512eb91687747d9a8a29337/source/db/index.ts#L26-L31'>GitHubInstallationSettings</a>, here's the <a href='https://github.com/danger/peril/blob/master/source/db/index.ts'>current version</a>. These are org-wide settings
+that require a new deploy of the server to re-create.</p>
+
+<p><code>"rules":</code> These are rules which are applied to every repo that Peril has access to. So in this case, every Pull Request in the org will make Peril run the Dangerfile at <code>"artsy/artsy-danger@org/all-prs.ts"</code>.</p>
+
+<p><code>"repos":</code> These are repo-specific overrides, so a Pull Request to artsy/reaction would trigger both the org-wide Dangerfile, and one on the reaction repo.</p>
+
+</div>
+
+
+<p></article>
+<article class='post'></p>
+
+<a name="Events"></a>
+<h2>Events</h2>
+
+<p>A Dangerfile evaluation occurs once a GitHub webhook is sent. In the above examples there are two events that Danger supports:
+<code>"pull_request"</code> and <code>"issues.opened"</code>. These are qualifiers that GitHub provide as a <a href="https://developer.github.com/v3/activity/events/types/events">Webhook EventTypes</a>.</p>
+
+<p>There's a lot of them: <code>commit_comment</code>, <code>create</code>, <code>delete</code>, <code>deployment</code>, <code>deployment_status</code>, <code>fork</code>, <code>gollum</code>, <code>installation</code>, <code>installation_repositories</code>, <code>issue_comment</code>, <code>issues</code>, <code>label</code>, <code>marketplace_purchase</code>, <code>member</code>, <code>membership</code>, <code>milestone</code>, <code>organization</code>, <code>org_block</code>, <code>page_build</code>, <code>project_card</code>, <code>project_column</code>, <code>project</code>, <code>public</code>, <code>pull_request</code>, <code>pull_request_review</code>, <code>pull_request_review_comment</code>, <code>push</code>, <code>release</code>, <code>repository</code>, <code>status</code>, <code>team</code>, <code>team_add</code>, <code>watch</code>.</p>
+
+<p>Some of these events also have unique sub-actions too:</p>
+
+<ul>
+<li><p>For an <code>issue</code> event there is: <code>assigned</code>, <code>unassigned</code>, <code>labeled</code>, <code>unlabeled</code>, <code>opened</code>, <code>edited</code>,  <code>milestoned</code>, <code>demilestoned</code>, <code>closed</code>, or <code>reopened</code></p></li>
+<li><p>For a <code>pull_request</code> event there is: <code>assigned</code>, <code>unassigned</code>, <code>review_requested</code>, <code>review_request_removed</code>, <code>labeled</code>, <code>unlabeled</code>, <code>opened</code>, <code>edited</code>, <code>closed</code>, or <code>reopened</code></p></li>
+</ul>
+
+
+<p>The way that you define rules in Peril gives you the ability to either focus on one action for an event type: <code>"issues.opened"</code> or all actions
+on an event: <code>"pull_request"</code>. Once you get your head around this, you start to get a sense of the scope of Peril. At Artsy, we've barely scratched the surface.</p>
+
+<a name="Growth"></a>
+<h3>Growth</h3>
+
+<p>I've always advocated that Danger, and Peril should be <a href="http://danger.systems/js/usage/culture.html">applied incrementally</a>. This applies even more when you're
+making org changes that affect every developer - at least with Danger you can see the Pull Request that changes
+the Dangerfile. With Peril you get none of that.</p>
+
+<p>So, we introduced <a href="https://github.com/artsy/artsy-danger/#rfcs">an RFC process for Peril changes</a>. There's not much to it, if you want to add a rule that
+affects everyone then you need to make an issue following a template and then wait a week. If you make a new issue that
+includes the title <code>RFC:</code> then Peril sends a slack message to our developer Channel</p>
+
+<p><img src="/images/peril/peril-rfc.png" alt="/images/peril/peril-rfc.png" /></p>
+
+<p>This was simple to build via Peril, I first added the npm module: <code>"@slack/client"</code> to the <code>"modules"</code> array, making it available to a Dangerfile. Then I added an environment variable to Peril for a newly minted Slack Incoming Webhook URL, and exposed it to Dangerfiles via: <code>"env_vars": ["SLACK_RFC_WEBHOOK_URL"]</code>.</p>
+
+<p>Then I added a per-repo rule:</p>
+
+<pre><code class="json">    "artsy/artsy-danger": {
+      "issues.opened": "artsy/artsy-danger@danger/new_rfc.ts"
+    }
+</code></pre>
+
+<p>This means the Dangerfile is only ran on <code>"issues"</code> with an <code>"opened"</code> action. I didn't want the discussion around a rule spamming our slack with webhooks from the other actions. The file <code>danger/new_rfc.ts</code> looks like this:</p>
+
+<pre><code class="ts">import { schedule, danger } from "danger"
+import { IncomingWebhook } from "@slack/client"
+import { Issues } from "github-webhook-event-types"
+
+declare const peril: any // danger/danger#351
+
+const gh = danger.github as any as Issues
+const issue = gh.issue
+
+if (issue.title.includes("RFC:")) {
+  var url = peril.env.SLACK_RFC_WEBHOOK_URL || "";
+  var webhook = new IncomingWebhook(url)
+  schedule( async () =&gt; {
+   await webhook.send({
+      unfurl_links: false,
+      attachments: [{
+        pretext: "🎉 A new Peril RFC has been published.",
+        color: "good",
+        title: issue.title,
+        title_link: issue.html_url,
+        author_name: issue.user.login,
+        author_icon: issue.user.avatar_url
+      }]
+    })
+  })
+}
+</code></pre>
+
+<p>For events that are not a <code>"pull_request"</code> the <code>danger.github</code> object is the JSON for the event.  You can get TypeScript types available for every GitHub event via the NPM module <a href="https://www.npmjs.com/package/github-webhook-event-types">github-webhook-event-types</a> which makes it much easier to work with.</p>
+
+<a name="Where.to.go.from.here."></a>
+<h2>Where to go from here?</h2>
+
+<p>Right now we have <a href="https://github.com/artsy/artsy-danger/issues?utf8=%E2%9C%93&amp;q=is%3Aissue%20RFC">a few RFCs</a>, and I don't spend all day making Peril rules, I've gotta <a href="https://github.com/artsy/emission/pulls?utf8=%E2%9C%93&amp;q=consignments%20">do work y'know</a>. We're going to slowly build out our Peril infrastructure.</p>
+
+<p>I'm interested in exploring two ideas big for peril at the moment:</p>
+
+<ul>
+<li><p>What a Peril plugin system looks like: You can include modules which can listen to events and react themselves. An org-wide spellcheck on markdown files could be as easy as including <code>"modules": ["peril-plugin-spellcheck"]</code>.</p></li>
+<li><p>What <a href="https://github.com/danger/peril/issues/138">scheduled jobs</a> could look like for Peril: We have a bunch of checks I'd like to make on a a regular occasion, and then passing back feedback via slack or making an issue on the repo.</p></li>
+</ul>
+
+
+<p> For example if a repo has an owner who isn't in Artsy anymore, we should highlight that it needs a new owner.</p>
+
+<p>If you're interested in using Peril in large OSS projects, take a look at how Peril is used in CocoaPods via <a href="https://github.com/CocoaPods/peril-settings">CocoaPods/peril-settings</a>.</p>
+
+<p>If you're interested in using Peril in your org, run through the <a href="https://github.com/danger/peril/blob/master/docs/setup_for_org.md">Setup for Org</a> guide and help improve it when you inevitably have some weird issues.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Danger]]></title>
+    <link href="http://artsy.github.io/blog/2017/06/30/danger-one-oh-again/"/>
+    <updated>2017-06-30T00:00:00-04:00</updated>
+    <id>http://artsy.github.io/blog/2017/06/30/danger-one-oh-again</id>
+    <content type="html"><![CDATA[<p>Danger came out of two needs. One from the needs of a growing dev team working together full-time, and the other from the needs of a completely asymmetric large Open Source project.</p>
+
+<p>A work environment dev team is a complex place. You naturally grow, and to grow safely you add process. Process is a mixed bag, it's a net benefit at the trade-off of individual's time vs team cohesion. You want to grow your team guided by smart applications of process.</p>
+
+<p>On the other hand, working on a large open source project, it's easy to feel overwhelmed at the amount of work that needs to get done on a daily basis. The growth of your OSS team probably doesn't tie to the amount of work that needs to be done. Especially if you're like me, and you don't want to be maintaining OSS as a 2nd full-time job.</p>
+
+<p>So what do you do? Well in a work environment you don't really have a choice, as a team you hold each other to the rules that you set. In OSS, you sacrifice your spare time or you can find time at work, you could stop or you could burn out.</p>
+
+<p>And this is the environment in which the idea of Danger was incubated.</p>
+
+<p>Today mark version 1.0 of the second version of Danger. I'm going to cover what they are, how they continue to grow and what I see their trajectory as.</p>
+
+<!-- more -->
+
+
+<a name="Why."></a>
+<h1>Why?</h1>
+
+<p>Danger came from a need to customise the GitHub workflow for pull requests. In a work context, we wanted to add process like CHANGELOGs and be more thorough about testing. In Open Source, we needed to stop asking the same things to drive-by contributors. Their patches are valuable for sure, but asking for the same changes each time gets tiring. We want to work at a higher level of abstraction.</p>
+
+<p>In both cases you want a way to give instant feedback for things that are "Unit Tests have failed" or "Code could not compile". However, it's hard to give feedback that says "You have not added a CHANGELOG entry in the right format."</p>
+
+<p>Typically CI would only provide a binary: true or false response to the changes for review. We want a more shades of grey.</p>
+
+<a name="What.does.Danger.do."></a>
+<h2>What does Danger do?</h2>
+
+<p>Danger acts as a way of creating unit tests at code review level. It gives you the ability to write tests that say: "has this file changed?", "does the contents of new files include this string?", "does the build log include a warning we know is bad news?" then the results of those tests are moved back into the place you're talking about the code.</p>
+
+<p>To do this, you need to be able to create your own rules. Every team has different dynamics, and while it makes sense to offer a set of a set of standard rules that can work across a lot of projects - I'm pretty sure that the needs of the Artsy engineering team is different from the needs of your team.</p>
+
+<p>Danger runs your code, and provides a set of easy to use APIs for you to build these useful culture rules. You write your rules in code, we call these files Dangerfiles. Similar to how a testing framework would give a set of expectations. The general gist is Danger provides access to:</p>
+
+<ul>
+<li>Changes from Git</li>
+<li>Changes from GitHub/GitLab/BitBucket</li>
+<li>Interacting with Danger</li>
+</ul>
+
+
+<p>By making per-project rules with these APIs, you can cover most rote tasks involved in code review. To make it easy for anyone to run Danger on every pull request, Danger was made to run during continuous integration.</p>
+
+<a name="OK..so..2.versions.of.Danger.."></a>
+<h1>OK, so "2 versions of Danger"?</h1>
+
+<p>I first implemented Danger in Ruby. Ruby is a great language for building terminal apps, in the iOS community it's the language in which the largest OSS projects are built in. So, as someone used to building apps in that space, it wasn't really a debate what language to work with.</p>
+
+<p>The Ruby build of Danger is now at 5.x with almost 100 releases, it's a solid exploration into code review automation. Ultimately though, I started to feel three main pain-points:</p>
+
+<ul>
+<li><p>At Artsy, we moved our mobile team to React Native, and other teams were also consolidating on JavaScript everywhere. It felt weird using a Ruby inside a strictly JS only context.</p></li>
+<li><p>Trying to re-create the environment of a PR was tricky from inside the CI. For example most providers are good at about saving on space and bandwidth during a run, and Danger often has to ruin that in order to replicate the PR locally.</p></li>
+<li><p>I wanted to explore server-side Dangerfiles. I wouldn't feel comfortable hosting a server that allows anyone to run their own Ruby code. Ruby isn't built with sandboxing in mind.</p></li>
+</ul>
+
+
+<a name="JavaScript"></a>
+<h2>JavaScript</h2>
+
+<p>First I explored the idea of having JavaScript based Dangerfiles inside the Ruby version of Danger. I did this by <a href="https://github.com/danger/danger/pull/422">bridging Danger's Ruby objects into a JavaScript context</a> and allowing bi-directional communication between the two. This handled some of the immediate needs, but proved inadequate when working with JavaScript's simple system library and it ignored all other JavaScript tooling.</p>
+
+<p>After enough time, I came to the conclusion that realistically, to use JavaScript properly, you need node modules and npm.</p>
+
+<p>So 10 months ago I decided it was worth starting from scratch and re-created Danger in JavaScript. I had time to consider what I would do differently, and this time I added one key additional restraints on the system: Data can only come from an API.</p>
+
+<p>This constraint negates one of the key problems with running running a Dangerfile on a server - having to have a copy of the code and the PR's environment.</p>
+
+<p>In addition, JavaScript has a much simpler model for evaluating, importing and exporting code and so whitelisting modules and functions can be feasible for a hosted version of Danger.</p>
+
+<center><img src ="/images/danger/danger.png" style="width:50%"></center>
+
+
+<a name="L1.0.is.my.middle.name"></a>
+<h1>1.0 is my middle name</h1>
+
+<p>Any software project used in production should probably be 1.0, but in addition to production use a library needs documentation to be 1.0.</p>
+
+<p>Calling Danger production ready means doing the entire <a href="http://artsy.github.io/blog/2016/07/03/handling-big-projects/">Defensive OSS</a> process: Documentation, Guides, API Reference, Website and Branding.</p>
+
+<p>Once each version of Danger had started to mature to a point that the user-facing aspect stopped changing I started focusing on the documentation engine and website. In both cases, a considerable amount of documentation is generated from the source code of Danger. I'm a big fan of keeping that inside the source code and building documentation sites which import it directly.</p>
+
+<a name="So.what.can.I.do.with.Danger."></a>
+<h1>So what can I do with Danger?</h1>
+
+<p>In one way this is a bit like asking, so what can I test with unit tests? Anything, within the scope of: the PR, build artifacts and introspecting the codebase.</p>
+
+<p>I'll cover a quick API overview, then talk about how you can work with these:</p>
+
+<a name="Git"></a>
+<h3>Git</h3>
+
+<ul>
+<li>What files have been added, removed or changed.</li>
+<li>Changes specific to a file.</li>
+<li>Looking into Commits.</li>
+<li>Exploring the Diff.</li>
+</ul>
+
+
+<a name="GitHub...GitLab...BitBucket"></a>
+<h3>GitHub / GitLab / BitBucket</h3>
+
+<ul>
+<li>Access to the PR's JSON representation.</li>
+<li>Consistent access for PR body, title, author across all platforms.</li>
+<li>Util functions for linking to files.</li>
+</ul>
+
+
+<a name="Danger"></a>
+<h3>Danger</h3>
+
+<ul>
+<li>Handle running other Dangerfiles.</li>
+<li>Handles plugin management.</li>
+<li>Provides a set of utility functions that would often get used.</li>
+</ul>
+
+
+<a name="Messaging"></a>
+<h3>Messaging</h3>
+
+<ul>
+<li>Leave warnings, messages and markdown comments.</li>
+<li>Leave errors, marking the build as failed.</li>
+<li>Post any of the above of the above inside a file.</li>
+<li>Create a GitHub review, and use the above messaging.</li>
+</ul>
+
+
+<a name="Plugins"></a>
+<h3>Plugins</h3>
+
+<ul>
+<li>Infrastructure for shared rules.</li>
+<li>Opens up the ability to validate tricky things with an easy API.</li>
+</ul>
+
+
+<p>The API differs between the JS and Ruby version, not drastically - but there are no plugins for Danger JS yet. That's still a bit away.</p>
+
+<a name="OK..got.it."></a>
+<h2>OK, got it.</h2>
+
+<p>Let's cover a few examples of the kind of tests can you write.</p>
+
+<a name="Checking.for.changes.to.a.specific.file"></a>
+<h4>Checking for changes to a specific file</h4>
+
+<p>Checking for a CHANGELOG. This was the first rule imagined for Danger, I add it to every project.</p>
+
+<p>The first implementation of this rule can just be a check if the file <code>CHANGELOG.md</code> is modified in any PR, that can then be
+revised to also check whether there are git changes related to your app. Then documentation, README, tooling updates
+don't require an entry. We also check if the PR title says "trivial" and skip the CHANGELOG check.</p>
+
+<p>If you're interested in standardizing on the <a href="http://keepachangelog.com/en/0.3.0/">keepachangelog.com</a> format there is <a href="https://github.com/dblock/danger-changelog">danger-changelog</a>.</p>
+
+<p>Some other examples around this is pinging specific people when a file has changed, or failing if a file that's never meant
+to be modified is changed, warning about potential semantic version updates for changes to specific files.</p>
+
+<a name="Checking.the.results.of.command-line.tools"></a>
+<h4>Checking the results of command-line tools</h4>
+
+<p>The Artsy developer blog runs both a spell checker, and a prose linter. These report back on files added or
+modified during the PR. As someone known for writing loose and quick, having a machine provide some automatic feedback
+makes it easy to not waste my reviewers time.</p>
+
+<p>This is done by the <a href="https://github.com/dbgrandi/danger-prose">danger-prose</a> plugin, which wraps both an <a href="https://github.com/lukeapage/node-markdown-spellcheck">npm module</a> and a <a href="https://github.com/amperser/proselint/">python egg</a>.
+The plugin handles installing and running the CLI, then converts the output into markdown for github.</p>
+
+<a name="Handling.build.artifacts"></a>
+<h4>Handling build artifacts</h4>
+
+<p>If Danger runs after the build process, you can read build logs to provide better feedback. This can range from taking
+the results of a test run and posting what has failed (e.g. <a href="https://github.com/orta/danger-junit">danger-junit</a>), to finding specific strings inside
+build logs and highlighting them.</p>
+
+<p>In our native iOS app, when a developer accidentally adds code which accesses the network in a test. That is logged out
+during the build. Then later, danger will read the logs to find any mentions of this and post it in the comment.</p>
+
+<a name="PR.Metadata"></a>
+<h4>PR Metadata</h4>
+
+<p>Every team's workflow is different, but it's pretty common to use a tool other than code review for keeping track of a project's momentum. You can use Danger to warn people that they haven't included a Trello, or JIRA ticket reference on
+every PR.</p>
+
+<p>A similar approach could be to warn if someone is sending a PR to a branch other than the preferred branch. This works
+well if you use the git-flow model for branches.</p>
+
+<p>We nearly always add a check to see if someone is assigned to a PR, and warn it it's unassigned in front-end projects.</p>
+
+<a name="Using.the.platform.API"></a>
+<h4>Using the platform API</h4>
+
+<p>There's no limits here, by using the API from your platform you can perform any sorts of checks. In the Danger repo
+we use the GitHub API to note whether someone is in the Danger org, to remind the core team to invite them to the org
+after submitting a PR.</p>
+
+<a name="Introducing.Danger"></a>
+<h2>Introducing Danger</h2>
+
+<p>OK, maybe that's got you thinking <em>"ah, I know a process I can automate"</em>.</p>
+
+<p>It can be easy to try and jump straight from no Dangerfile to a many-hundred lined complex set of cultural rules. I'd advise against introducing a long list of rules for Danger all at once. In my experience, gradual integration works better. The entire team may have agreed on the changes upfront, but slower adoption has worked better for teams new to working with Danger.</p>
+
+<p>At Artsy we've found that first just integrating Danger with a single simple rule (like checking for a CHANGELOG entry) then starting to introduce them piece-meal from different contributors has made it easier to go from "Ah, we shouldn't do that again" to "Oh, we could make a Danger rule for that" to "Here's the PR".</p>
+
+<a name="Which.Danger.should.I.use."></a>
+<h2>Which Danger should I use?</h2>
+
+<p>This definitely depends on the project, there's a longer discussion <a href="http://danger.systems/js/js-vs-ruby.html">on the site</a> too, but here's the main gist:</p>
+
+<ul>
+<li><p><strong>Danger Ruby</strong> is more mature, has more features, a solid plugin eco-system and covers more platforms. It's in a great place and is unlikely to have breaking changes from this point onwards.</p></li>
+<li><p><strong>Danger JS</strong> has a bigger potential for growth, is "stable enough", you can create plugins and will be able to do things that the Ruby version could not - eventually. Right now it only works with GitHub.</p></li>
+</ul>
+
+
+<a name="Onwards.and.Upwards"></a>
+<h2>Onwards and Upwards</h2>
+
+<p>With the JavaScript version of Danger in a great place ready for production, I can start more serious work on <a href="https://github.com/danger/peril#peril">Peril</a>. Peril is a hosted web-service that runs Dangerfiles against GitHub events, see <a href="https://github.com/danger/peril/blob/master/VISION.md">the VISION.md</a>. Those events span from a new user being created, to a new issue on a repo. Peril lets you run your own complex rules across an entire org. This can be a really powerful way to audit and improve entire-company culture.</p>
+
+<p>We started using Peril in Artsy <a href="https://github.com/artsy/reaction-force/pull/184">last week</a>. So it's starting to become a thing internally. It'll be awesome to explore the idea of org-wide rules. I think we're starting with making sure we assign someone on a PR.</p>
+
+<p>So give Danger a shot, and if you're bold. give <a href="https://github.com/danger/peril#peril">Peril</a> a shot.</p>
+
+<hr />
+
+<p>This post uses the CC license image from <a href="https://twitter.com/CloudyConway/status/880426417024114688">this tweet</a> with some changes to make it fit with the design of the blog. Thanks <a href="https://www.patreon.com/vexorian">Vexorian</a>.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Open Source FAQ for Engineers]]></title>
+    <link href="http://artsy.github.io/blog/2017/01/04/OSS-FAQ/"/>
+    <updated>2017-01-04T12:17:00-05:00</updated>
+    <id>http://artsy.github.io/blog/2017/01/04/OSS-FAQ</id>
+    <content type="html"><![CDATA[<p>We have a lot of Open Source code. For engineers without considerable experience in the open source realm, understanding some of the copyright issues around code ownership can be tricky. I've been working with our CTO <a href="http://artsy.github.io/author/db/">dB.</a>, and our senior counsel <a href="http://www.theartgorgeous.com/yayoi-shionoiri/">Yayoi Shionoiri</a> on creating an open-source FAQ for engineers.</p>
+
+<a name="What.is.Open.Source."></a>
+<h3>What is Open Source?</h3>
+
+<p>Open Source code is code that can be freely examined, used, adapted, and shared by all through a license that sets forth these principles.  The only potential limitation that an Open Source license is likely to impose is that future copies of the code (whether in adapted or un-adapted form) be themselves licensed in a manner consistent with the original license.  At Artsy, we are committed to making our engineering work <a href="http://code.dblock.org/2015/02/09/becoming-open-source-by-default.html">Open Source by default</a>.  A list of our Open Source projects can be <a href="http://artsy.github.io/open-source/">found here</a>.</p>
+
+<!-- more -->
+
+
+<a name="What.is.Open.Source....by.default...."></a>
+<h3>What is Open Source “by default”?</h3>
+
+<p>Open Source “by default” means that new projects are started or eventually become Open Source, unless keeping them proprietary represents a significant competitive advantage.</p>
+
+<a name="What.are.the.advantages.to.Open.Source.code."></a>
+<h3>What are the advantages to Open Source code?</h3>
+
+<p>Keeping our engineering work Open Source by default allows us to be a thought leader,  attracts and retains the best talent, and also is a great way to produce high quality work -- in other words, it helps to drive and sustain our Quality Worthy of Art, Openness, and People are Paramount values.  However, not everything is or should be Open Source. There <a href="https://www.objc.io/issues/22-scale/artsy/">are many great reasons</a> to be open, but it’s not a catch all.</p>
+
+<a name="How.does.Open.Source.interact.with.Copyright."></a>
+<h3>How does Open Source interact with Copyright?</h3>
+
+<p>Very generally speaking, copyright is the body of law that governs how Artsy upholds its ownership rights over code that an Artsy engineer creates as part of their duties as an Artsy employee, and Open Source describes the way in which Artsy shares this code with the rest of the world.  Put in another way, Artsy engineers develop code as "work for hire" to Artsy, and Artsy shares this code with specific usage and distribution terms through a license attached to it.</p>
+
+<a name="What.s.Inbound.Open.Source.code.vs..Outbound.Open.Source.code."></a>
+<h3>What's Inbound Open Source code vs. Outbound Open Source code?</h3>
+
+<p>Inbound Open Source code refers to the use of third party code under an Open Source license for Artsy's products.  Outbound Open Source code refers to the publication of Artsy code.</p>
+
+<p>When we publish Outbound Open Source code, as mentioned before, Artsy has a right to do so because we have the copyright to this code.  We give third parties the right to use the code usually through <a href="https://github.com/artsy/eigen/blob/master/LICENSE">this  type</a> of broad license (<a href="https://tldrlegal.com/license/mit-license">MIT</a>).  (For more on code licenses, see <a href="http://artsy.github.io/blog/2015/12/10/License-and-You/">Orta’s talk on code licenses</a>.</p>
+
+<a name="What.is.the.credit.on.Artsy.s.Open.Source.code."></a>
+<h3>What is the credit on Artsy's Open Source code?</h3>
+
+<p>For Inbound Open Source code, we usually credit the work of external engineers by conforming to their license, and providing attribution inside each source base.  This tends to be generated automatically by project tools, and rarely needs specific attention.</p>
+
+<p>For Outbound Open Source code, we usually credit the work of our Artsy engineers by using attribution changelogs, and by assigning an engineer as a point person for a project.</p>
+
+<a name="How.can.I.use.Open.Source.code.at.Artsy."></a>
+<h3>How can I use Open Source code at Artsy?</h3>
+
+<p>When we use Inbound Open Source code, we should always check to ensure that there are no third parties who may have an exclusive right over this code before we include it in our own work.  We should also use standard tools for handling Open Source code to ensure that we comply with the licenses attached to such code.  We do not use code with viral licenses (for e.g., GPL License) or  <a href="https://opensource.org/licenses/">non-OSI approved licenses</a> (for e.g., WTFPL license).</p>
+
+<a name="How.do.I.Open.Source.a.new.project.at.Artsy."></a>
+<h3>How do I Open Source a new project at Artsy?</h3>
+
+<p>When creating a new project at Artsy, you must include a license.  We use the <a href="https://opensource.org/licenses/MIT">canonical copy</a> of the MIT license with the copyright holder as shown below.  Ideally, you should ensure that it starts off with a README, continuous integration set up, linters, tests and documentation.</p>
+
+<a name="How.can.I.Open.Source.an.existing.project.at.Artsy."></a>
+<h3>How can I Open Source an existing project at Artsy?</h3>
+
+<p>When Open Sourcing existing projects, it's best practice to announce it to the development (and related product teams) and ensure that there is ample time for discussion before moving it.  For example <a href="http://artsy.github.io/blog/2016/09/06/Milestone-on-OSS-by-Default/">see how we migrated the artsy.net</a> website.</p>
+
+<a name="How.does.Artsy.think.about.Artsy.Projects.versus.Personal.Projects."></a>
+<h3>How does Artsy think about Artsy Projects versus Personal Projects?</h3>
+
+<p>Engineers have the ability to determine whether work they do is uniquely for Artsy during Artsy work hours (an "Artsy Project") or is a project created on their own time but can be applied and shared with Artsy (a "Personal Project").  If you have questions about whether a particular project should be an Artsy Project or a Personal Project, please discuss with your manager.</p>
+
+<p>From an external consumer’s perspective, the end result is generally the same as the license by which these code is released should not change.</p>
+
+<p>Examples are found below:</p>
+
+<table>
+<thead>
+<tr>
+<th>Artsy Project </th>
+<th> Personal Project </th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><em>Copyright:</em> Art.sy, Inc., 2017 </td>
+<td> <em>Copyright:</em> [Developer], Art.sy, Inc., 2017</td>
+</tr>
+<tr>
+<td>Example: <a href="https://github.com/artsy/energy/blob/master/LICENSE#L1">Energy</a> </td>
+<td> Example: <a href="https://github.com/orta/ORStackView/blob/master/LICENSE#L1">ORStackView</a></td>
+</tr>
+</tbody>
+</table>
+
+
+<hr />
+
+<p>I'd like to personally thank <a href="http://gilyehuda.strikingly.com">Gil Yehuda</a> of Yahoo! for answering a lot of our questions, you really helped. For Artsy staff, you can get the living document at the <a href="https://sites.google.com/a/artsymail.com/intranet/team-pages/engineering">Engineering page on Artsy Atlas</a>.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Dev Interviews: Maxim Cramer]]></title>
+    <link href="http://artsy.github.io/blog/2016/09/16/Dev-Interview-Maxim-Cramer/"/>
+    <updated>2016-09-16T12:11:00-04:00</updated>
+    <id>http://artsy.github.io/blog/2016/09/16/Dev-Interview-Maxim-Cramer</id>
+    <content type="html"><![CDATA[<p>I'm happy to introduce the next in the <a href="http://artsy.github.io/series/dev-interviews/">Dev Interviews</a> series - <a href="http://www.mennenia.com/">Maxim Cramer</a>.</p>
+
+<p>Maxim has been at Artsy for 6 month, working on our mobile app Eigen. Our interview covers how being a remote developer, advice for people at a HQ working with remotes, her work with React Native and what the future holds for the Artsy mobile team.</p>
+
+<p>Jump <a href="https://www.youtube.com/watch?v=ftsBR_KqHcE">to YouTube</a> for the video, or click more for a inline video.</p>
+
+<!-- more -->
+
+
+<p></div></div><iframe width='100%' height='600' src='https://www.youtube.com/embed/ftsBR_KqHcE ' frameborder='0' allowfullscreen></iframe><div class='meta-container'><header>&nbsp;</header></div><div class='content-container'><div class='entry-content'></p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Help! I'm becoming Post-Junior]]></title>
+    <link href="http://artsy.github.io/blog/2016/09/10/Help!-I'm-becoming-Post-Junior/"/>
+    <updated>2016-09-10T12:17:00-04:00</updated>
+    <id>http://artsy.github.io/blog/2016/09/10/Help!-I'm-becoming-Post-Junior</id>
+    <content type="html"><![CDATA[<p>I’ve lived in NYC for 2 years now. I’ve been around long enough that some of the people I helped when they started learning have begun to feel like they’re not “Juniors” anymore.</p>
+
+<p>They have begun feeling confident in their code, their responsibilities at the company and wanting to improve both. It's a feeling that maybe, just maybe, <a href="https://ashfurrow.com/blog/normalizing-struggle/">you're not struggling to stay afloat anymore</a>.</p>
+
+<p>This post aims to be technology-agnostic, and if you sit somewhere at 1.5 - 3 years of programming experience then you’ll probably get something out of it. On top of that,  I’ll give some pragmatic JS and iOS specific tips at the end.</p>
+
+<!-- more -->
+
+
+<p>This post is easy to start. At Artsy we have an <a href="/blog/2015/04/03/artsy-engineering-compensation-framework/">engineering ladder system</a> - which I’ll paraphrase below. It’s worth the full read though.</p>
+
+<p>Key point:</p>
+
+<blockquote><p>Performance evaluation at Artsy is composed of the what, <em>i.e. what you achieve that contributes to your team’s goals and ultimately Artsy goals</em>, and the how, <em>i.e. how you act and how those actions contribute to Artsy’s culture and values</em>.</p></blockquote>
+
+<p>We measure your career stage by your <strong>impact</strong> at Artsy, this is initially on the products you’re working on, but eventually moves out to the culture and the business:</p>
+
+<ul>
+<li><strong>Engineer 1</strong> - Can ship a well defined product feature.</li>
+<li><strong>Engineer 2</strong> - Can independently own a product feature and can handle the communication with others around it.</li>
+<li><strong>Engineer 3</strong> - Can handle a suite of features, and broadly contribute within a domain. Can improve company culture.</li>
+<li><strong>Engineer 4</strong> - Can improve and be a multiplier on other people’s work, can anticipate larger trends and affect culture to avoid or steer in that direction.</li>
+<li><strong>Engineer 5</strong> - Defines technical culture, works on impacting all parts of our businesses and creates new opportunities for the company.</li>
+</ul>
+
+
+<p>What we’re talking about here is the transition from Engineer 1, to Engineer 2. Here’s our full unabridged description of an Engineer 2.</p>
+
+<blockquote><p>▪   Consistently writes and delivers correct and clean quality code with guidance.</p>
+
+<p>▪   Self-sufficient and makes steady progress on tasks.</p>
+
+<p>▪   Knows when to ask for help and how to get unblocked.</p>
+
+<p>▪   Makes steady, well-paced progress without the need for constant significant feedback from more senior engineers.</p>
+
+<p>▪   Owns a small-to-medium feature from technical design through completion.</p>
+
+<p>▪   Provides help and support outside of area under their responsibility.</p></blockquote>
+
+<p>What can we gleam from this, so we start thinking of ways to improve ourselves as individual contributors?</p>
+
+<a name="Increasing.your.Responsibility.with.Cross.Team.Interactions"></a>
+<h2>Increasing your Responsibility with Cross Team Interactions</h2>
+
+<p>It’s very unlikely that you are making all of the calls in a product. What is hopefully happening is that your team figures out a plan to ship something in a reasonable timeframe and as a team you assign each other smaller tasks that make that work.</p>
+
+<p>It’s very likely that as a junior, you will be given the most well-defined small tasks. In OSS we call these the “<a href="https://github.com/danger/danger/issues?q=is:issue+is:open+label:%22You+Can+Do+This%22">easy first steps</a>.” Tasks that can be done atomically, without requiring more interaction with designers or members of the product team. Initially this is a feature (in that you get easy tasks), that eventually turns into a bug (you want to contribute at a higher level).</p>
+
+<p>When it’s time to divvy up responsibilities, you should consider speaking up about taking tasks that are blocking people, but require further investigation outside of your dev team.</p>
+
+<p>These responsibilities could be checking up on the status of an API with a platform team, or communicating with different parts of the business to get confirmation on specific details. It is the vagueness that makes the task harder, work your way towards making the task clear - then you have a well defined project.</p>
+
+<a name="Learn.From.Your.Project.s.History"></a>
+<h2>Learn From Your Project's History</h2>
+
+<p>When you work, you’re probably working inside an application that other people have built. They have laid the frameworks down, established the team norms and architectural choices that could have existed for years before you arrived.</p>
+
+<p>Part of what gives you that feeling of confidence in your code is you’re comfortable within the architectural ecosystem you’re used to: e.g. React + Relay, iOS MVVM, Backbone + Express, Rails + CoffeeScript. You’re probably getting good at using them, and that’s awesome.</p>
+
+<p>To evolve from just that you need to really understand why these choices were made, what their trade-offs are and what was the reasoning for that platform to even exist in the first place.</p>
+
+<p>By understanding the history of the choices that you have been living with, you can make better decisions in the future.</p>
+
+<a name="The.Bigger.Picture"></a>
+<h2>The Bigger Picture</h2>
+
+<p>There is no “One True Solution” for anything in programming. You should be wary of anyone that tries to tell you all similar sounding things should be done one way. The things you work on are likely a combination of different patterns that work together to become “an app.”</p>
+
+<p>Understanding your patterns well, and knowing when to apply them will get you far. If you want to go further still, you need to be able to step back from your patterns and try to see larger pictures. A feature that you write this week  <em>with a little bit more abstraction today</em> could make it much easier to write something next week. Writing better abstractions makes it easier for you to become a multiplier for other peoples work.</p>
+
+<p>The hard bit is trying to see what that is. Realistically, this is about understanding where the product is, and what it’s roadmap is for the next few iterations as well as trying to think about abstractions that may not be available inside your project.</p>
+
+<a name="Studying.Outside.Your.Daily.Craft"></a>
+<h2>Studying Outside Your Daily Craft</h2>
+
+<p>Some problems can be handled particularly well by different architectural patterns.  Without knowing they exist, how can you think that they are something you can use?</p>
+
+<p>This leads to an interesting problem, how do you learn new architectural pattens?</p>
+
+<ul>
+<li><p><strong>Process</strong>: You’re probably using some form of <a href="http://agilemanifesto.org">agile development</a>, understand what that <a href="https://en.wikipedia.org/wiki/Agile_software_development">really means</a> and how it compares to others. Try reading <a href="https://www.amazon.co.uk/Getting-Things-Done-Stress-free-Productivity-ebook/dp/B00SHL3V8M/ref=sr_1_1?s=digital-text&amp;ie=UTF8&amp;qid=1473567686&amp;sr=1-1&amp;keywords=gtd">Getting Things Done</a> and I’ve heard good things about <a href="https://www.amazon.co.uk/Personal-Kanban-Mapping-Work-Navigating-ebook/dp/B004R1Q642/ref=sr_1_6?s=digital-text&amp;ie=UTF8&amp;qid=1473567686&amp;sr=1-6&amp;keywords=gtd">Personal Kanban</a>.</p></li>
+<li><p><strong>Code Architecture</strong>: Here are some book recommendations, <a href="https://www.amazon.com/Clean-Code-Handbook-Software-Craftsmanship/dp/0132350882">Clean Code</a>, <a href="https://www.amazon.com/Pragmatic-Programmer-Journeyman-Master/dp/020161622X/ref=pd_bxgy_14_img_3?ie=UTF8&amp;psc=1&amp;refRID=BX7MTECP16Z2VR3N3T25">The Pragmatic Programmer</a>, <a href="https://www.amazon.com/Design-Patterns-Elements-Reusable-Object-Oriented/dp/0201633612">Elements of Reusable Object-Oriented Software</a> and <a href="https://www.amazon.co.uk/gp/product/B005OYHF0A/">Working Effectively with Legacy Code</a>.</p></li>
+<li><p><strong>Tooling</strong>: There is never one way to do something, so try something else. Switch text editor for a month, or explore alternative methods of doing the same thing.</p></li>
+</ul>
+
+
+<p>You can use this knowledge to start offering useful advice that can start to influence your team, for example could be in the form of trying few new idea and offering feedback on their tradeoffs.</p>
+
+<p>As this is useful to both you and your employer, you should consider talking to your manager about booking time in your work calendar for doing 30 minutes of career development once a week studying topics like these.</p>
+
+<a name="Helping.others"></a>
+<h2>Helping others</h2>
+
+<p>You can help your team out by using some of the skills from above.  You can then start thinking of expanding your influence within the company. By being a programmer you already have skills that a lot of people would like to learn or have a better working knowledge of it.</p>
+
+<p>If you’ve got this far in the article, it’s very likely you’ve got enough skills to <a href="http://artsy.github.io/blog/2016/01/26/swift-at-artsy/">lead</a> <a href="http://artsy.github.io/blog/2016/08/31/Keyboard-Shortcuts-workshop/">workshops</a> internally, and write blog posts about <a href="http://artsy.github.io/blog/2015/07/06/how-to-write-unit-tests-like-a-brood-parasite/">your experiences</a> to <a href="http://artsy.github.io/blog/2015/06/04/an-eigenstate-of-mind/">help other developers</a> at your level. For example, this month I’ve ran a workshop on keyboard shortcuts and on learning to program in Swift. Both of them required maybe 2 hours of preparation, and an email or two announcing that it’s happening.</p>
+
+<p>Other options are to give <a href="http://artsy.github.io/blog/2016/03/09/public-speaking-part1-is-it-for-me/">technical talks</a> within your company on specific topics, for example <a href="/blog/2015/12/10/License-and-You/">Licensing for OSS code</a> is a talk I gave internally to Artsy. We now have a weekly team “Lunch &amp; Learn” where we give anyone the chance to talk, or request a talk on a topic.</p>
+
+<p>This gives a lot of space for personal growth too, as these are really easy to transition into blog posts and meetup talks.</p>
+
+<p>Finally, try to pair with programmers outside of your direct team, it could be on whatever they’re working on - you’ll learn a bit more about other systems and they’ll get to <a href="https://en.wikipedia.org/wiki/Rubber_duck_debugging">rubber duck</a> their problems.</p>
+
+<a name="Side.Projects"></a>
+<h2>Side Projects</h2>
+
+<p>I’ve tried to focus this post specifically on things you can do on work time. Not everyone has the ability to go home and spend a few hours on this and that. However, programming at the early stage can generally be a “you get out what you put in” kind of deal with time.</p>
+
+<p>Side projects give you the chance to test out new ideas in an isolated environment that is totally under your control. They are great places for exploring what makes a system tick. Some side-projects are built to be <a href="https://github.com/orta/you-can-do-it">thrown away</a> others can <a href="https://cocoapods.org">to last</a> <a href="http://danger.systems">for years</a>. Both are valuable spaces for experimentation.</p>
+
+<a name="Contributing.to.Open.Source"></a>
+<h2>Contributing to Open Source</h2>
+
+<p>A lot of people’s work relies on Open Source code and as you are starting to branch out into having a larger impact - perhaps making smaller improvements to the projects you rely on every day could help. This is <a href="https://speakerdeck.com/orta/the-cocoapods-spec-repo-and-cocoadocs">how I got started</a> working with larger projects in the Open Source world.</p>
+
+<p>Interacting in these projects exposes you to whole new teams of people with, hopefully, very different perspectives. It will change you, you will change them.</p>
+
+<a name="Moving.On"></a>
+<h2>Moving On</h2>
+
+<p>This is a <a href="https://github.com/artsy/artsy.github.io/pull/275#issuecomment-246227904">complicated topic</a>, perhaps worth of it’s own post.</p>
+
+<p>When you first start looking for a job in technology, you likely didn’t have too many choices and was pleased to have any offer. By this point, I’m hoping you’re at a point where you understand your value to a company.</p>
+
+<p>Perhaps it’s worth thinking about what kind of space the company has for you to grow in. Since I started my career, Artsy is the only job I’ve been in for longer than 2 years. For some, I felt like I had outgrown my original role but could not find a space to grow into.</p>
+
+<p>It’s worth re-evaluating. I do it every year in anticipation of my <a href="http://orta.io/on/being/29">annual write-ups</a>.</p>
+
+<a name="Wrap-up"></a>
+<h2>Wrap-up</h2>
+
+<p>This is no simple “one-step to consider yourself post-Junior" article. Only a collection of ideas that you can apply until you feel confident as you find you own ways to help out. As you grow, you grow in many different directions at once - and all of them are valid.</p>
+
+<p>You can grow by research, practice, doing things outside of work, doing small projects with others in work, experimentation with technology, interacting with more and more people and re-thinking existing approaches. Once you're outside of small feature work - there are so many ways you can contribute.</p>
+
+<p>We use the idea of an engineering ladder as a yardstick to ensure we treat developers fairly at Artsy. Different companies will have different ways of scoping how you measure up as a programmer. Your company's ladder can help offer direction for what they would love to see.</p>
+
+<p>At the end of the day you’ve got your foundations now, and its time to start thinking about building yourself into a unique programmer and creating your own opinions. There’s never been a better time to start.</p>
+
+<a name="Further.Reading"></a>
+<h2>Further Reading</h2>
+
+<ul>
+<li><a href="http://blog.alexnaraghi.com/what-i-didnt-understand-as-a-junior-programmer">What I Didn't Understand as a Junior Programmer</a></li>
+<li><a href="http://dbgrandi.github.io/growing_beyond_junior/">Growing Beyond Junior</a></li>
+</ul>
+
+
+<a name="iOS.Specific"></a>
+<h2>iOS Specific</h2>
+
+<ul>
+<li>Study <a href="/blog/2016/06/19/graphql-for-mobile/">GraphQL</a>, study my entire series on <a href="/series/cocoa-architecture/">Cocoa Architecture</a> and our <a href="/series/ios-code-review/">app code reviews</a>.</li>
+<li>Study MVC, MVVM, RxSwift, VIPER, Testing, BDD, CocoaPods &amp; Swift Package Manager with an hour on each minimum.</li>
+<li>Read <a href="https://www.objc.io">objc.io</a>, watch their videos too.</li>
+<li>Study other languages, and toolsets - it’s very easy to become silo’d in just Objective-C and Swift.</li>
+</ul>
+
+
+<a name="JS.Specific"></a>
+<h2>JS Specific</h2>
+
+<ul>
+<li>Study ES6, GraphQL, React, Relay, Redux, Angular 2, Flow, TypeScript, Carte Blanche, Webpack &amp; Babel.</li>
+<li>Get a company account on <a href="https://egghead.io">Egghead</a> - give yourself a timetable on work time to spend 30+ minutes once a week watching videos from it.</li>
+<li>Explore VS Code, Safari Web Inspector and Web Storm as different ways of doing the same thing, but with more tooling.</li>
+</ul>
+
+]]></content>
+  </entry>
+  
+</feed>

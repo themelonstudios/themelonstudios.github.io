@@ -1,0 +1,33 @@
+---
+layout: default
+title: "contact"
+category: "contact"
+---
+
+<div style="background-color:#26BD7B;margin-left:11%;margin-right:11%;padding:1%" align="center">
+<font color="#FFFFFF" style="text-align:left"><font face="Arial Rounded MT Bold" size="6">
+<div style="text-align:center">
+<span style="background-color:transparent;line-height:1.5">Contact melon studios 🍉
+</span>
+</div>
+</font>
+</font>
+<font color="#ffffff" style="text-align:left"><font face="Arial Rounded MT Bold">
+<div align="center">
+<img src="/images/emailvideo.gif" width="40%">
+</div>
+<div style="text-align:center">
+If you'd like to contact melon studios 🍉  please send an email to:
+</br>
+</br>
+<font color="#FFFFFF" style="text-align:left"><font face="Arial Rounded MT Bold" size="5">
+<div style="text-align:center">
+<span style="background-color:transparent;line-height:1.5">contact.melonstudios@gmail.com
+</span>
+</font>
+</font>
+</br>
+</br>
+</div>
+</br>
+</div>
