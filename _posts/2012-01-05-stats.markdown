@@ -6,7 +6,7 @@ categories: "stats"
 
 <div style="background-color:#26BD7B;margin-left:11%;margin-right:11%;padding:1%;margin-bottom:2%" align="center">
 <font color="#FFFFFF" style="text-align:left"><font face="Arial Rounded MT Bold" size="6">
-Statistics </br> 
+Statistics <br>
 </font>
 </font>
 </div>
@@ -16,9 +16,9 @@ Statistics </br>
 <div style="background-color:#26BD7B;width:44%; padding: 5px 5px 5px; margin: 5px 2px; display: inline-block; white-space: normal; vertical-align: middle; text-align:center;margin-right:2%;margin-left:2%">
 <font color="#FFFFFF"><font face="Arial Rounded MT Bold" size="6">
 &nbsp;
-</br>
-Installs:</br> <span class="Count">1061440</span>
-</br>
+<br>
+Installs:<br> <span class="Count">1061440</span>
+<br>
 &nbsp;
 </font>
 </font>
@@ -27,9 +27,9 @@ Installs:</br> <span class="Count">1061440</span>
 <div style="background-color:#26BD7B;width:44%; padding: 5px 5px 5px; margin: 5px 2px; display: inline-block; white-space: normal; vertical-align: middle; text-align:center;margin-left:2%;margin-right:2%">
 <font color="#FFFFFF"><font face="Arial Rounded MT Bold" size="6">
 &nbsp;
-</br>
-Countries:</br> <span class="Count">221</span>
-</br>
+<br>
+Countries:<br> <span class="Count">221</span>
+<br>
 &nbsp;
 </font>
 </font>
@@ -39,7 +39,7 @@ Countries:</br> <span class="Count">221</span>
 
 <div style="background-color:#26BD7B;margin-left:11%;margin-right:11%;padding:1%" align="center">
 <font color="#FFFFFF" style="text-align:left"><font face="Arial Rounded MT Bold" size="6">
-Explore the map: </br>
+Explore the map: <br>
 </font>
 </font>
 <div style="background-color:#26BD7B;width:70%; padding: 5px 5px 5px; margin: 5px 2px; display: inline-block; white-space: normal; vertical-align: middle; text-align:center;">
