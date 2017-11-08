@@ -14,7 +14,6 @@ lunr_search:
 
 highlighter: rouge
 
-markdown: rdiscount
 rdiscount:
     extensions:
         - generate_toc
