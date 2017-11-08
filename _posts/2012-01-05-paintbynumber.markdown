@@ -39,10 +39,11 @@ categories: "games"
 </div>
 </font>
 </font>
-<div class = "image" align="center"style="width:auto;display:inline-block;">
-<a href="https://play.google.com/store/apps/details?id=com.KevvAppsPBN" style="line-height:1.5">
-<img alt="Android app on Google Play" src="https://developer.android.com/images/brand/en_app_rgb_wo_60.png">
-</a>
-</div>
-</font>
+
+<div class = "image" align="center" style="width:auto;display:inline-block;">
+    <a href="https://play.google.com/store/apps/details?id=com.KevvAppsPBN" style="line-height:1.5">
+      <img alt="Android app on Google Play" src="https://developer.android.com/images/brand/en_app_rgb_wo_60.png">
+    </a>
+  </div>
+
 </div>
