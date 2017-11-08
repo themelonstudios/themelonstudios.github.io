@@ -32,17 +32,17 @@ categories: "games"
 </div>
 
 <div style="background-color:#26BD7B;margin-left:11%;margin-right:11%;padding:1%" align="center">
-<font color="#ffffff" style="text-align:left"><font face="Arial Rounded MT Bold" size="6">
-<div style="text-align:center">
-<span style="background-color:transparent;line-height:1.5">download here:
-</span>
-</div>
-</font>
-</font>
-<div class = "image" align="center" style="width:auto;display:inline-block;">
-<a href="https://play.google.com/store/apps/details?id=com.kevvapps.BaW" style="line-height:1.5">
-<img alt="Android app on Google Play" src="https://developer.android.com/images/brand/en_app_rgb_wo_60.png">
-</a>
-</div>
-</font>
+  <font color="#ffffff" style="text-align:left"><font face="Arial Rounded MT Bold" size="6">
+    <div style="text-align:center">
+      <span style="background-color:transparent;line-height:1.5">download here:
+      </span>
+    </div>
+  </font>
+  </font>
+
+  <div class = "image" align="center" style="width:auto;display:inline-block;">
+    <a href="https://play.google.com/store/apps/details?id=com.kevvapps.BaW" style="line-height:1.5">
+      <img alt="Android app on Google Play" src="https://developer.android.com/images/brand/en_app_rgb_wo_60.png">
+    </a>
+  </div>
 </div>
