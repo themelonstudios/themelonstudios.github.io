@@ -12,7 +12,6 @@ gems: ['jekyll-lunr-js-search']
 lunr_search:
   js_dir: "javascripts"
 
-markdown: rdiscount
 highlighter: rouge
 
 markdown: rdiscount

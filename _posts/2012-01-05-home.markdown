@@ -4,38 +4,55 @@ title: "home"
 category: "home"
 ---
 
- <div align="center">
- <font face="Arial Rounded MT Bold" size="6">
- Choose a game to explore:
- </font>
- <ul>  
- <li style="display:inline-block;margin-left: 15px;margin-right: 15px;">
-  <div class="image">
-  <a href="/troid"><img src="/images/troidlink.png" >
-  </div></li>
- <li style="display:inline-block;margin-left: 15px;margin-right: 15px;"> </a><a href="/paintbynumber">
-  <div class="image">
-  <img src="/images/pbnlink.png" ></a>
- </div></li>
- </ul>
- <ul>  
- <li style="display:inline-block;margin-left: 15px;margin-right: 15px;">
-  <div class="image">
-  <a href="/ballsandwalls"><img src="/images/bawlink.png" >
-  </div></li>
- <li style="display:inline-block;margin-left: 15px;margin-right: 15px;"> </a><a href="/trap">
-  <div class="image">
-  <img src="/images/traplink.png" ></a>
- </div></li>
- </ul>
- <ul>  
- <li style="display:inline-block;margin-left: 15px;margin-right: 15px;">
-  <div class="image">
-  <a href="/memorytrace"><img src="/images/mtlink.png" >
-  </div></li>
- <li style="display:inline-block;margin-left: 15px;margin-right: 15px;"> </a><a href="/flatearth">
-  <div class="image">
-  <img src="/images/felink.png" ></a>
- </div></li>
- </ul>
+<div align="center">
+
+  <font face="Arial Rounded MT Bold" size="6">
+  Choose a game to explore:
+  </font>
+
+  <ul>  
+    <li style="display:inline-block;margin-left: 15px;margin-right: 15px;">
+      <div class="image">
+        <a href="/troid"><img src="/images/troidlink.png" >
+        </a>
+      </div>
+    </li>
+    <li style="display:inline-block;margin-left: 15px;margin-right: 15px;">
+      <div class="image">
+        <a href="/paintbynumber"><img src="/images/pbnlink.png" >
+        </a>        
+      </div>
+    </li>
+  </ul>
+
+  <ul>  
+    <li style="display:inline-block;margin-left: 15px;margin-right: 15px;">
+      <div class="image">
+        <a href="/ballsandwalls"><img src="/images/bawlink.png" >
+        </a>
+      </div>
+    </li>
+    <li style="display:inline-block;margin-left: 15px;margin-right: 15px;">
+      <div class="image">
+        <a href="/trap"><img src="/images/traplink.png" >
+        </a>
+      </div>
+    </li>
+  </ul>
+
+  <ul>
+    <li style="display:inline-block;margin-left: 15px;margin-right: 15px;">
+      <div class="image">
+        <a href="/memorytrace"><img src="/images/mtlink.png" >
+        </a>
+      </div>
+    </li>
+    <li style="display:inline-block;margin-left: 15px;margin-right: 15px;">
+      <div class="image">
+        <a href="/flatearth"><img src="/images/felink.png" >
+        </a>
+      </div>
+    </li>
+  </ul>
+
 </div>
