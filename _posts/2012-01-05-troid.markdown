@@ -4,44 +4,48 @@ title: "troid"
 categories: "games"
 ---
 <div align="center">
-<img src="/images/troidfeaturegraphic.png" width="75%" >
+  <img src="/images/troidfeaturegraphic.png" width="75%" >
 </div>
 
 <div style="background-color:#26BD7B;margin-left:11%;margin-right:11%;padding:1%" align="center">
-<font color="#FFFFFF" style="text-align:left"><font face="Arial Rounded MT Bold" size="6">
-<div style="text-align:center">
-<span style="background-color:transparent;line-height:1.5">Can you survive troid?
-</span>
-</div>
-</font>
-</font>
-<font color="#ffffff" style="text-align:left"><font face="Arial Rounded MT Bold">
-<div align="center">
-<img src="/images/troidvideo.gif" width="60%">
-</div>
-<div style="text-align:center">
-<ul style="display: inline-block">
-<li style="text-align:left">🚀 Shoot asteroids and survive in outer space!</li>
-<li style="text-align:left">🚀 Use power-ups and upgrades to win!</li>
-<li style="text-align:left">🚀 Leaderboards and achievements to test your skills.</li>
-</ul>
-</div>
-</font>
-</font>
+    <font color="#FFFFFF" style="text-align:left"><font face="Arial Rounded MT Bold" size="6">
+        <div style="text-align:center">
+            <span style="background-color:transparent;line-height:1.5">Can you survive troid?
+            </span>
+        </div>
+    </font>
+    </font>
+
+    <font color="#ffffff" style="text-align:left"><font face="Arial Rounded MT Bold">
+        <div align="center">
+            <img src="/images/troidvideo.gif" width="60%">
+        </div>
+
+        <div style="text-align:center">
+            <ul style="display: inline-block">
+                <li style="text-align:left">🚀 Shoot asteroids and survive in outer space!</li>
+
+                <li style="text-align:left">🚀 Use power-ups and upgrades to win!</li>
+
+                <li style="text-align:left">🚀 Leaderboards and achievements to test your skills.</li>
+            </ul>
+        </div>
+    </font>
+    </font>
 </div>
 
 <div style="background-color:#26BD7B;margin-left:11%;margin-right:11%;padding:1%" align="center">
-<font color="#ffffff" style="text-align:left"><font face="Arial Rounded MT Bold" size="6">
-<div style="text-align:center">
-<span style="background-color:transparent;line-height:1.5">download here:
-</span>
-</div>
-</font>
-</font>
-<div class = "image" align="center"style="width:auto;display:inline-block;">
-<a href="https://play.google.com/store/apps/details?id=com.melonstudios.troid" style="line-height:1.5">
-<img alt="Android app on Google Play" src="https://developer.android.com/images/brand/en_app_rgb_wo_60.png">
-</a>
-</div>
-</font>
+    <font color="#ffffff" style="text-align:left"><font face="Arial Rounded MT Bold" size="6">
+      <div style="text-align:center">
+          <span style="background-color:transparent;line-height:1.5">download here:
+          </span>
+      </div>
+    </font>
+    </font>
+
+    <div class = "image" align="center"style="width:auto;display:inline-block;">
+        <a href="https://play.google.com/store/apps/details?id=com.melonstudios.troid" style="line-height:1.5">
+            <img alt="Android app on Google Play" src="https://developer.android.com/images/brand/en_app_rgb_wo_60.png">
+        </a>
+    </div>
 </div>
