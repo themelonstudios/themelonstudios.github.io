@@ -14,7 +14,7 @@ categories: "privacy"
 </font>
 <font color="#ffffff" style="text-align:left"><font face="Arial Rounded MT Bold">
 <div align="center">
-<img src="/images/privacymelon.gif" width="40%">
+<img src="/images/privacymelon.gif" width="90%">
 </div>
 <div style="text-align:left">
 By Privacy Policy, we mean the way we collect, use and disclose any information we collect from our users.
