@@ -1,18 +1,22 @@
-{% capture root_url %}{{ site.root | strip_slash }}{% endcapture %}
-{% include head.html %}
-<body>
-  <header id="banner">{% include header.html %}</header>
-  <div class="header-hamburger">
-    <button class="cmn-toggle-switch cmn-toggle-switch__htx">
-      <span>toggle menu</span>
-    </button>
-  </div>
-  <div id="main">
-    <div id="content">
-      {{content}}
-    </div>
-  </div>
-  <footer id="main_footer">{% include footer.html %}</footer>
-  {% include end_of_body_scripts.html %}
-</body>
+<!DOCTYPE html>
+<html>
+    {% include head.html %}
+    <body id="page-top" class="index">
+    {% include nav.html %}
+    {% include header.html %}
+    {% include portfolio_grid.html %}
+    {% include about.html %}
+
+    {% if site.contact == "static" %}
+    {% include contact_static.html %}
+    {% elsif site.contact == "disqus" %}
+    {% include contact_disqus.html %}
+    {% else %}
+    {% include contact.html %}
+    {% endif %}
+
+    {% include footer.html %}
+    {% include modals.html %}
+    {% include js.html %}
+    </body>
 </html>

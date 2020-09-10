@@ -1,0 +1,10 @@
+---
+title: troid
+layout: default
+modal-id: 7
+img: troidweb.png
+gif: troidvideo.gif
+alt: troid
+description: Shoot asteroids and survive in outer space! Use power-ups and upgrades to win. Battle the leaderboards and earn achievements to test your skills.
+androidlink: https://play.google.com/store/apps/details?id=com.melonstudios.troid
+---

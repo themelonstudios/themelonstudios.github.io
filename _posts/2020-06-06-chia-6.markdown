@@ -1,0 +1,10 @@
+---
+title: chia pet
+layout: default
+modal-id: 6
+img: chiaweb.png
+gif: chiavideo.gif
+alt: chia
+description: Care for your own chia seed pet.  Add water and dirt.  When he grows, make sure you trim the stems.  Be careful, and follow the rules so he doesn't get sad.  How big can you grow your pet?
+androidlink: https://play.google.com/store/apps/details?id=com.melonstudios.chiapet
+---

@@ -1,0 +1,10 @@
+---
+title: Flat Earth
+layout: default
+modal-id: 1
+img: feweb.png
+gif: construction.gif
+alt: fe
+description: Game in development, coming soon!!.
+androidlink: https://play.google.com/store/apps/dev?id=6060141727775614332
+---

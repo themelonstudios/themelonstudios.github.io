@@ -1,19 +1,38 @@
-url: http://artsy.github.io
-title: melon studios 🍉
-permalink: /:title/
-baseurl: "" # the subpath of your site, e.g. /blog/
-github_username:  Artsy
-disqus_short_name: artsy
-disqus_show_comment_count: false
+# Site settings
+title: Melon Studios
+email: contact.melonstudios@gmail.com
+url: www.melonstudios.app
+description: "Mobile game developer Melon Studios."
+keywords: "mobile games, apps, games, developer, google play, apple."
 
-exclude: [vendor]
+# Color settings (hex-codes without the leading hash-tag)
+color:
+  primary: e80037
+  primary-rgb: "232,0,55"
+  secondary: 18bc9c
+  secondary-dark: 18bc9c
+  hover: 2c3e50
 
-gems: ['jekyll-lunr-js-search']
-lunr_search:
-  js_dir: "javascripts"
+# Footer settings
+footer:
+  copyright: Melon Studios
+  social: Download Games
 
-highlighter: rouge
+# Social networks usernames (many more available: google-plus, flickr, dribbble, pinterest, instagram, tumblr, linkedin, etc.)
+social:
+  - title: apple
+    url: http://apps.apple.com/us/app/findy-things/id1513448251
+  - title: google-play
+    url: https://play.google.com/store/apps/dev?id=6060141727775614332
 
-rdiscount:
-    extensions:
-        - generate_toc
+# Build settings
+markdown: kramdown
+permalink: pretty
+
+#for posts
+defaults:
+  - scope:
+      path: ""
+      type: "posts"
+    values:
+      permalink: ""

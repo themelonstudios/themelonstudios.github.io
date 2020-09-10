@@ -1,0 +1,10 @@
+---
+title: Balls and Walls
+layout: default
+modal-id: 4
+img: bawweb.png
+gif: bawvideo.gif
+alt: baw
+description: Protect the walls from the balls. Tap on the falling balls to change its color.  Balls hitting walls of the same color are OK.  If balls hit walls of different colors, then GAME OVER.  Difficulty increases with each level.  What's your high score?
+androidlink: https://play.google.com/store/apps/details?id=com.kevvapps.BaW
+---

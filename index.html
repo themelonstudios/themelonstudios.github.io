@@ -1,13 +1,3 @@
 ---
 layout: default
 ---
-<div>
-  {% for post in site.posts %}
-    {% if post.title == "home" %}
-      {% assign content = post.content %}
-      <article>
-        {% include melonpage.html %}
-      </article>
-      {% endif %}
-  {% endfor %}
-</div>

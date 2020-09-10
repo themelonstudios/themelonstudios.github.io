@@ -1,0 +1,10 @@
+---
+title: trap
+layout: default
+modal-id: 5
+img: trapweb.png
+gif: trapvideo.gif
+alt: trap
+description: Eat the cheese while avoiding the traps!  Race against the clock to collect as many cheeses as you can.  More traps appear if you're too slow.  Try to beat the high score.
+androidlink: https://play.google.com/store/apps/details?id=com.kevvapps.trap
+---
